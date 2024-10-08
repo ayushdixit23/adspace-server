@@ -21,14 +21,15 @@ const topicsToCreate = [
   { name: "ad-impressions", partitions: 1, replicationFactor: 1 },
 ];
 
-const allowedOrigins = ["http://localhost:3000", "http://localhost:5000", process.env.CLIENT_URL];
+const allowedOrigins = ["http://localhost:3000", "http://localhost:5000", "https://ads.grovyo.com"];
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', process.env.CLIENT_URL);
+  res.header('Access-Control-Allow-Origin', "https://ads.grovyo.com");
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   next();
 });
+
 app.use(cors({
   origin: allowedOrigins,
   credentials: true

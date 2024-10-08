@@ -3,6 +3,8 @@ import User from '../models/user.js';
 import Advertiser from '../models/advertiser.js';
 
 const isAuthenticated = async (req, res, next) => {
+
+  console.log(req.cookies)
   const token = req.cookies.auth;
 
   if (!token) {
@@ -14,9 +16,7 @@ const isAuthenticated = async (req, res, next) => {
     let user = await Advertiser.findById(decoded.userId);
     
     if (!user) {
-      user = await User.findById(decoded.userId);
-      console.log(user);
-      
+      user = await User.findById(decoded.userId);    
     }
 
     if(!user) {

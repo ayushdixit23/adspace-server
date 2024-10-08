@@ -474,7 +474,14 @@ const createAccount = async (req, res) => {
       const token = jwt.sign({ userId: savedAdv._id, Email: savedAdv.email }, process.env.JWT_SECRET, { expiresIn: "15d" });
       const updatedUser = { ...savedAdv.toObject(), dp: `${process.env.URL}${user.profilepic}` };
 
-     
+      res.cookie('auth', token, {
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production', 
+        maxAge: 15 * 24 * 60 * 60 * 1000,
+        sameSite: 'strict', 
+        domain: 'ads.grovyo.com' 
+      });
+
       return res.status(201).json({
         message: "Account created successfully!",
         user: { firstname: newAdvertiser.firstname, lastname: newAdvertiser.lastname, email: newAdvertiser.email },
@@ -528,6 +535,15 @@ const createAccount = async (req, res) => {
     // Set token in a cookie
     const token = jwt.sign({ userId: newAdvertiser._id, Email: newAdvertiser.email }, process.env.JWT_SECRET, { expiresIn: "15d" });
    
+    res.cookie('auth', token, {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production', 
+      maxAge: 15 * 24 * 60 * 60 * 1000,
+      sameSite: 'strict', 
+      domain: 'ads.grovyo.com' 
+    });
+    
+
     res.status(201).json({
       message: "Account created successfully!",
       user: { firstname: newAdvertiser.firstname, lastname: newAdvertiser.lastname, email: newAdvertiser.email },
@@ -616,12 +632,22 @@ const login = async (req, res) => {
       { expiresIn: "15d" }
     );
 
+
     const updatedUser = {
       ...Advertiser.toObject(),
       dp:
         process.env.URL +
         (user instanceof advertiser ? user.image : user.profilepic),
     };
+
+    res.cookie('auth', token, {
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production', 
+      maxAge: 15 * 24 * 60 * 60 * 1000,
+      sameSite: 'strict', 
+      domain: 'ads.grovyo.com' 
+    });
+    
 
     res.status(200).json({
       message: "Login successful",
