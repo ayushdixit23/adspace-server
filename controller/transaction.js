@@ -25,6 +25,8 @@ export const addmoneytowallet = async (req, res) => {
       transactionid: transactionId,
     });
 
+    console.log(user.firstname,user._id)
+
     
     const savedTransaction = await newTransaction.save();
     await Advertiser.updateOne({ _id: id }, { $push: { transactions: savedTransaction._id } });
@@ -34,9 +36,9 @@ export const addmoneytowallet = async (req, res) => {
       merchantTransactionId: savedTransaction._id,
       merchantUserId: user._id,
       amount: amount*100,
-      redirectUrl: "http://localhost:3000/main/wallet",
+      redirectUrl: "https://ads.grovyo.com/main/wallet",
       redirectMode: "REDIRECT",
-      callbackUrl: `${process.env.API}/transactions/updatetransactionstatus/${id}/${savedTransaction._id}/${amount}`,
+      callbackUrl: `https://adsserver.grovyo.xyz/api/v1/transactions/updatetransactionstatus/${id}/${savedTransaction._id}/${amount}`,
       paymentInstrument: {
         type: "PAY_PAGE",
       },
@@ -70,13 +72,13 @@ export const addmoneytowallet = async (req, res) => {
 
 export const updatetransactionstatus = async (req, res) => {
   const { id, tid, amount } = req.params;
-
-  console.log("got hit:", id, tid, amount);
-  
-
   try {
+    console.log(id)
     const user = await Advertiser.findById(id);
+
+
     if (!user) {
+      console.log("user nti found")
       return res.status(404).json({ success: false, message: "User not found" });
     }
 

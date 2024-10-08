@@ -5,7 +5,10 @@ import Advertiser from '../models/advertiser.js';
 const isAuthenticated = async (req, res, next) => {
 
   console.log(req.cookies)
-  const token = req.cookies.auth;
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1]; 
+
+  console.log(token,"token")
 
   if (!token) {
     return res.status(401).json({ success: false, message: "Please Login to access this resource" });
