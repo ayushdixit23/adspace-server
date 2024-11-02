@@ -1,0 +1,28 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs
+*.log
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Build directories
+dist/
+build/
+out/
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE or editor-specific files
+.idea/
+.vscode/
+.DS_Store
