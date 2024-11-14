@@ -53,11 +53,11 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
 
-await createKafkaTopics(topicsToCreate);
+// await createKafkaTopics(topicsToCreate);
 
-runAdViewsConsumer();
-runAdClicksConsumer();
-runAdImpressionsConsumer();
+// runAdViewsConsumer();
+// runAdClicksConsumer();
+// runAdImpressionsConsumer();
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/ads", adsRouter);

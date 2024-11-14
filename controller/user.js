@@ -1297,348 +1297,274 @@ const addUser = async (req, res) => {
   }
 };
 
-// function getAgeGroup(age) {
+const AGE_GROUPS = ["0-14", "15-28", "29-42", "43-65", "65+"];
+const INTEREST_CATEGORIES = [
+  "Movies & Entertainment", "News", "Gaming", "Career & Education", "Anime & Manga",
+  "Family & Relationships", "Sports", "Science & Learning", "DIY & Crafts",
+  "Music & Podcasts", "Beauty & Fashion", "Health & Fitness", "Food & Cooking",
+  "Business & Finance", "Photography", "Travel & Outdoors", "Art & Creativity"
+];
+
+// const collectUserData = async () => {
+//   try {
+//     const usersWithOutFilterOfState = await User.find().select("_id DOB address interest gender");
+
+//     const users = usersWithOutFilterOfState.filter(
+//       (user) =>
+//         user.gender &&
+//         user.DOB &&
+//         user.address &&
+//         user.address.state &&
+//         user.interest
+//     );
+
+//     let userData = [];
+
+//     users.forEach((user) => {
+//       const age = user.DOB ? moment().diff(moment(user.DOB, "DD/MM/YYYY"), "years") : null;
+//       const formattedUser = {
+//         age,
+//         gender: user.gender.toLowerCase(),
+//         state: user.address.state,
+//         statesForCompare: user.address.state.toLowerCase().trim(),
+//         interest: user.interest,
+//       };
+//       userData = dataChanger(formattedUser, user._id, userData);
+//     });
+
+//     const locationdata = new LocationData({ userData });
+//     await locationdata.save();
+    
+//     console.log("done");
+//   } catch (error) {
+//     console.error("Error collecting user data:", error);
+//   }
+// };
+
+// // collectUserData()
+// const dataChanger = (user, userId, userData) => {
+//   const existingStateData = userData.find(
+//     (data) => data.state.name.toLowerCase().trim() === user.statesForCompare
+//   );
+
+//   if (existingStateData) {
+//     updateExistingStateData(existingStateData, user, userId);
+//   } else {
+//     userData.push(createNewStateData(user, userId));
+//   }
+
+//   return userData;
+// };
+
+// const updateExistingStateData = (existingData, user, userId) => {
+//   try {
+//     const genderData = existingData.gender[user.gender];
+//     const ageGroup = getAgeGroup(user.age);
+  
+//     existingData.state.count++;
+//     genderData.count++;
+//     genderData.age[ageGroup].count++;
+//     existingData.age[ageGroup].count++;
+  
+//     INTEREST_CATEGORIES.forEach((interest) => {
+//       if (user.interest.includes(interest)) {
+//         genderData.interest[interest]++; // Update gender's main interest
+//         genderData.age[ageGroup].interest[interest]++; // Update interest in specific age group
+//         existingData.age[ageGroup].interest[interest]++; // Update state's age group interest
+//         existingData.state.interest[interest]++; // Update state's main interest
+//       }
+//     });
+  
+//     if (!existingData.userid.includes(userId)) {
+//       existingData.userid.push(userId);
+//     }
+//   } catch (error) {
+//     console.log(error)
+//   }
+// };
+
+// const createNewStateData = (user, userId) => {
+//   const newStateData = {
+//     state: {
+//       name: user.state,
+//       count: 1,
+//       interest: initializeInterests()
+//     },
+//     gender: {
+//       male: initializeGenderData(user.gender === "male", user.age),
+//       female: initializeGenderData(user.gender === "female", user.age),
+//     },
+//     age: initializeAgeData(user.age),
+//     userid: [userId]
+//   };
+
+//   return newStateData;
+// };
+
+// const initializeInterests = () => {
+//   return INTEREST_CATEGORIES.reduce((acc, interest) => {
+//     acc[interest] = 0;
+//     return acc;
+//   }, {});
+// };
+
+// const initializeGenderData = (isGender, age) => {
+//   const ageGroup = getAgeGroup(age);
+//   const genderData = {
+//     count: isGender ? 1 : 0,
+//     interest: initializeInterests(), // Main interests at gender level
+//     age: AGE_GROUPS.reduce((acc, group) => {
+//       acc[group] = { count: group === ageGroup && isGender ? 1 : 0, interest: initializeInterests() };
+//       return acc;
+//     }, {})
+//   };
+
+//   return genderData;
+// };
+
+// const initializeAgeData = (age) => {
+//   const ageGroup = getAgeGroup(age);
+//   return AGE_GROUPS.reduce((acc, group) => {
+//     acc[group] = { count: group === ageGroup ? 1 : 0, interest: initializeInterests() };
+//     return acc;
+//   }, {});
+// };
+
+// const getAgeGroup = (age) => {
 //   if (age <= 14) return "0-14";
 //   if (age <= 28) return "15-28";
 //   if (age <= 42) return "29-42";
 //   if (age <= 65) return "43-65";
 //   return "65+";
-// }
-
-// const dataChanger = (stateName,state,gender, newid,userData) => {
-//   const someData = {
-//     state: { name: state, count: 0 },
-//     gender: {
-//       male: {
-//         count: 0,
-//         age: {
-//           "0-14": 0,
-//           "15-28": 0,
-//           "29-42": 0,
-//           "43-65": 0,
-//           "65+": 0,
-//         },
-//       },
-//       female: {
-//         count: 0,
-//         age: {
-//           "0-14": 0,
-//           "15-28": 0,
-//           "29-42": 0,
-//           "43-65": 0,
-//           "65+": 0,
-//         },
-//       },
-//     },
-//     age: {
-//       "0-14": 0,
-//       "15-28": 0,
-//       "29-42": 0,
-//       "43-65": 0,
-//       "65+": 0,
-//     },
-//     userid: [...id, newid],
-//   };
-
-//   if(userData.map((d)=>d.state.name.toLowerCase().trim()===stateName)){
-//     if(gender === "male"){ 
-//       someData.gender.male.count++;
-//       someData.gender.male.age[getAgeGroup(userData[0].age)]++;
-//       someData.age[getAgeGroup(userData[0].age)]++;
-//       someData.state.count++;
-//       userData[0].userid.push(newid);
-//      }else{
-//       someData.gender.female.count++;
-//       someData.gender.female.age[getAgeGroup(userData[0].age)]++;
-//       someData.age[getAgeGroup(userData[0].age)]++;
-//       someData.state.count++;
-//       userData[0].userid.push(newid);
-//      }
-//   }else{
-
-//   }
-//   return userData
-// };
-
-// const collectUserDatAa = async () => {
-//   try {
-//     const usersWithOutFilterOfState = await User.find()
-//       .select("_id DOB address age gender")
-//       .limit(10);
-
-
-
-//     const users = usersWithOutFilterOfState.filter(
-//       (user) => user.address && user.address.state
-//     );
-//     let userData = []
-
-//     for (let i = 0; i < users.length; i++) {
-//       const age = users[i].DOB
-//         ? moment().diff(moment(users[i].DOB, "DD/MM/YYYY"), "years")
-//         : null;
-//       const user = {
-//         age: age,
-//         gender: users[i].gender.toLowerCase(),
-//         state: users[i].address.state,
-//         statesForCompare: users[i].address.state.toLowerCase().trim(),
-//       };
-//       console.log(user);
-
-//       dataChanger(user.statesForCompare,user.state,gender, users[i]._id,userData)
-
-
-//     }
-//   } catch (error) {
-//     console.log(error);
-//   }
-// };
-
-// collectUserDatAa();
-
-// const deletuserData = async () => {
-//   try {
-//     await LocationData.deleteMany();
-//     console.log("done");
-//   } catch (error) {
-//     console.error(error);
-//   }
 // };
 
 
-// const dataChanger = (stateName, state, gender, age, newid, userData) => {
-//   // Check if state data already exists
-//   const existingStateData = userData.find(data => data.state.name.toLowerCase().trim() === stateName);
+const deletelastIndex = async() => {
+  const locationdata =await LocationData.findOne()
+  locationdata.userData.pop()
+ 
+  await locationdata.save()
+  console.log("done")
+}
 
-//   if (existingStateData) {
-//     // Update existing state data
-//     if (gender === "male") {
-//       existingStateData.gender.male.count++;
-//       existingStateData.gender.male.age[getAgeGroup(age)]++;
-//       existingStateData.age[getAgeGroup(age)]++;
-//     } else {
-//       existingStateData.gender.female.count++;
-//       existingStateData.gender.female.age[getAgeGroup(age)]++;
-//       existingStateData.age[getAgeGroup(age)]++;
-//     }
-
-//     // Increment overall state count
-//     existingStateData.state.count++;
-
-//     // Add user ID to the list if it doesn’t already exist
-//     if (!existingStateData.userid.includes(newid)) {
-//       existingStateData.userid.push(newid);
-//     }
-//   } else {
-//     // Create new state data
-//     const someData = {
-//       state: { name: state, count: 1 },
-//       gender: {
-//         male: {
-//           count: gender === "male" ? 1 : 0,
-//           age: {
-//             "0-14": gender === "male" && getAgeGroup(age) === "0-14" ? 1 : 0,
-//             "15-28": gender === "male" && getAgeGroup(age) === "15-28" ? 1 : 0,
-//             "29-42": gender === "male" && getAgeGroup(age) === "29-42" ? 1 : 0,
-//             "43-65": gender === "male" && getAgeGroup(age) === "43-65" ? 1 : 0,
-//             "65+": gender === "male" && getAgeGroup(age) === "65+" ? 1 : 0,
-//           },
-//         },
-//         female: {
-//           count: gender === "female" ? 1 : 0,
-//           age: {
-//             "0-14": gender === "female" && getAgeGroup(age) === "0-14" ? 1 : 0,
-//             "15-28": gender === "female" && getAgeGroup(age) === "15-28" ? 1 : 0,
-//             "29-42": gender === "female" && getAgeGroup(age) === "29-42" ? 1 : 0,
-//             "43-65": gender === "female" && getAgeGroup(age) === "43-65" ? 1 : 0,
-//             "65+": gender === "female" && getAgeGroup(age) === "65+" ? 1 : 0,
-//           },
-//         },
-//       },
-//       age: {
-//         "0-14": getAgeGroup(age) === "0-14" ? 1 : 0,
-//         "15-28": getAgeGroup(age) === "15-28" ? 1 : 0,
-//         "29-42": getAgeGroup(age) === "29-42" ? 1 : 0,
-//         "43-65": getAgeGroup(age) === "43-65" ? 1 : 0,
-//         "65+": getAgeGroup(age) === "65+" ? 1 : 0,
-//       },
-//       userid: [newid],
-//     };
-
-//     // Add the new state data to userData
-//     userData.push(someData);
-//   }
-
-//   return userData; // Return the updated userData
-// };
-
-// const collectUserData = async () => {
-//   try {
-//     const usersWithOutFilterOfState = await User.find()
-//       .select("_id DOB address gender")
-
-// console.log(usersWithOutFilterOfState.length)
-//     const users = usersWithOutFilterOfState.filter(
-//       (user) =>user.gender && user.DOB && user.address && user.address.state
-//     );
-
-//     let userData = [];
-
-//     console.log(users.length)
-
-//     const dif = usersWithOutFilterOfState.length - users.length
-//     console.log(dif,"fif")
-
-//     // for (let i = 0; i < users.length; i++) {
-//     //   const age = users[i].DOB
-//     //     ? moment().diff(moment(users[i].DOB, "DD/MM/YYYY"), "years")
-//     //     : null;
-
-//     //   const user = {
-//     //     age: age,
-//     //     gender: users[i].gender.toLowerCase(),
-//     //     state: users[i].address.state,
-//     //     statesForCompare: users[i].address.state.toLowerCase().trim(),
-//     //   };
+// deletelastIndex()
 
 
-//     //   userData = dataChanger(user.statesForCompare, user.state, user.gender, user.age, users[i]._id, userData);
-//     // }
+const collectUserData = async () => {
+  try {
+    const users = await User.find().select("_id DOB interest gender");
 
-//     // const locationDta = new LocationData({ userData })
-//     // await locationDta.save();
+    let userData = [];
 
-//     // console.log("done")
+    users.forEach((user) => {
+      const age = user.DOB ? moment().diff(moment(user.DOB, "DD/MM/YYYY"), "years") : null;
+      const formattedUser = {
+        age,
+        gender: user.gender?.toLowerCase(),
+        interest: user.interest,
+      };
+      userData = dataChanger(formattedUser, user._id, userData);
+    });
 
-//   } catch (error) {
-//     console.log(error);
-//   }
-// };
+    // console.log(userData[0]);
+    const locatorData = await LocationData.findOne()
+    locatorData.userData.push(userData[0])
+    await locatorData.save()
+    console.log("done")
+  } catch (error) {
+    console.error("Error collecting user data:", error);
+  }
+};
+// collectUserData()
 
-// const updateUserAddressState = async (currentState, newState) => {
-//   try {
-//     const updatedUsers = await User.updateMany(
-//       { "address.state": currentState }, // Query to find users with the current state
-//       { $set: { "address.state": newState } }, // Update to set the new state
-//       { new: true } // Option to return the updated documents
-//     );
+const dataChanger = (user, userId, userData) => {
+  if (userData.length === 0) {
+    userData.push(createNewAggregatedData(user, userId));
+  } else {
+    updateExistingAggregatedData(userData[0], user, userId);
+  }
+  return userData;
+};
 
-//     console.log(`${updatedUsers.modifiedCount} users updated from ${currentState} to ${newState}.`);
-//   } catch (error) {
-//     console.error("Error updating user states:", error);
-//   }
-// };
-
-// Example usage:
-// updateUserAddressState("Andaman and Nicobar Islands", "Andaman & Nicobar Islands");
-
-
-// const dataCha = async () => {
-//   try {
-//     const locationData = await LocationData.findOne();
-//     // Fetch all users and select relevant fields
-//     const usersWithOutFilterOfState = await User.find()
-//           .select("_id DOB address gender")
+const updateExistingAggregatedData = (aggregatedData, user, userId) => {
+  try {
+    const genderData = aggregatedData.gender[user.gender];
+    const ageGroup = getAgeGroup(user.age);
   
-//         const users = usersWithOutFilterOfState.filter(
-//           (user) =>user.gender && user.DOB 
-//         );
-    
+    genderData.count++;
+    genderData.age[ageGroup].count++;
+    aggregatedData.age[ageGroup].count++;
+    aggregatedData.state.count++;
+  
+    INTEREST_CATEGORIES.forEach((interest) => {
+      if (user.interest.includes(interest)) {
+        genderData.age[ageGroup].interest[interest]++;
+        genderData.interest[interest]++;
+        aggregatedData.age[ageGroup].interest[interest]++;
+        aggregatedData.state.interest[interest]++;
+      }
+    });
+  
+    if (!aggregatedData.userid.includes(userId)) {
+      aggregatedData.userid.push(userId);
+    }
+  } catch (error) {
+    console.log(error)
+  }
+ 
+};
 
-//     // Initialize the data structure
-//     const someData = {
-//       state: { name: "All", count: 0 },
-//       gender: {
-//         male: {
-//           count: 0,
-//           age: {
-//             "0-14": 0,
-//             "15-28": 0,
-//             "29-42": 0,
-//             "43-65": 0,
-//             "65+": 0,
-//           },
-//         },
-//         female: {
-//           count: 0,
-//           age: {
-//             "0-14": 0,
-//             "15-28": 0,
-//             "29-42": 0,
-//             "43-65": 0,
-//             "65+": 0,
-//           },
-//         },
-//       },
-//       age: {
-//         "0-14": 0,
-//         "15-28": 0,
-//         "29-42": 0,
-//         "43-65": 0,
-//         "65+": 0,
-//       },
-//       userid: [], // Initialize with existing IDs
-//     };
+const createNewAggregatedData = (user, userId) => {
+  return {
+    state: {
+      count: 1,
+      interest: initializeInterests(),
+      name:"All"
+    },
+  
+    gender: {
+      male: initializeGenderData(user.gender === "male", user.age),
+      female: initializeGenderData(user.gender === "female", user.age),
+    },
+    age: initializeAgeData(user.age),
+    userid: [userId]
+  };
+};
 
-//     // Loop through each user to update counts
-//     for (let i = 0; i < users.length; i++) {
-//       // Calculate the age based on DOB
-//       const age = users[i].DOB
-//         ? moment().diff(moment(users[i].DOB, "DD/MM/YYYY"), "years")
-//         : null;
-//       const gender = users[i].gender?.toLowerCase();
+const initializeInterests = () => {
+  return INTEREST_CATEGORIES.reduce((acc, interest) => {
+    acc[interest] = 0;
+    return acc;
+  }, {});
+};
 
-//       // Push the user's ID to the userid array
-//       someData.userid.push(users[i]._id);
-//       someData.state.count += 1;
+const initializeGenderData = (isGender, age) => {
+  const ageGroup = getAgeGroup(age);
+  return {
+    count: isGender ? 1 : 0,
+    interest: initializeInterests(),
+    age: AGE_GROUPS.reduce((acc, group) => {
+      acc[group] = { count: group === ageGroup && isGender ? 1 : 0, interest: initializeInterests() };
+      return acc;
+    }, {})
+  };
+};
 
-//       // Increment gender-specific counts
-//       if (gender === "male" || gender === "female") {
-//         someData.gender[gender].count += 1;
+const initializeAgeData = (age) => {
+  const ageGroup = getAgeGroup(age);
+  return AGE_GROUPS.reduce((acc, group) => {
+    acc[group] = { count: group === ageGroup ? 1 : 0, interest: initializeInterests() };
+    return acc;
+  }, {});
+};
 
-//         // Update age-specific counts for gender
-//         if (age !== null) {
-//           if (age <= 14) {
-//             someData.gender[gender].age["0-14"] += 1;
-//           } else if (age <= 28) {
-//             someData.gender[gender].age["15-28"] += 1;
-//           } else if (age <= 42) {
-//             someData.gender[gender].age["29-42"] += 1;
-//           } else if (age <= 65) {
-//             someData.gender[gender].age["43-65"] += 1;
-//           } else {
-//             someData.gender[gender].age["65+"] += 1;
-//           }
-//         }
-//       }
-
-//       // Update overall age counts
-//       if (age !== null) {
-//         if (age <= 14) {
-//           someData.age["0-14"] += 1;
-//         } else if (age <= 28) {
-//           someData.age["15-28"] += 1;
-//         } else if (age <= 42) {
-//           someData.age["29-42"] += 1;
-//         } else if (age <= 65) {
-//           someData.age["43-65"] += 1;
-//         } else {
-//           someData.age["65+"] += 1;
-//         }
-//       }
-//     }
-
-//     // Log the updated data for verification
-//     console.log(someData);
-
-//     locationData.userData.push(someData)
-//     await locationData.save()
-//     console.log("first")
-//   } catch (error) {
-//     console.error(error);
-//   }
-// };
-
+const getAgeGroup = (age) => {
+  if (age <= 14) return "0-14";
+  if (age <= 28) return "15-28";
+  if (age <= 42) return "29-42";
+  if (age <= 65) return "43-65";
+  return "65+";
+};
 
 export {
   createAccount,

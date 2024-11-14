@@ -877,7 +877,7 @@ const getCommunities = async (req, res) => {
       (community) => community !== null
     );
 
-    const locationData = await LocationData.findById("6723a5657e15ceddb7796c67")
+    const locationData = await LocationData.findOne()
   .select("userData.state userData.gender userData.age");
    
     res
