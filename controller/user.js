@@ -661,12 +661,12 @@ const login = async (req, res) => {
           type: "Individual",
           email: user.email,
           phone: user.phone,
-          address: user?.address?.streetaddress,
+          address: user?.selectedaddress?.streetaddress,
           image: user?.profilepic,
-          city: user?.address?.city,
-          state: user?.address?.state,
+          city: user?.selectedaddress?.city,
+          state: user?.selectedaddress?.state,
           password: decryptaes(user.passw),
-          pincode: user?.address?.pincode,
+          pincode: user?.selectedaddress?.pincode,
           userid: user._id,
           advertiserid: generateUniqueID(),
         });
@@ -758,12 +758,12 @@ const loginWithPhone = async (req, res) => {
           type: "Individual",
           email: user.email,
           phone: user.phone,
-          address: user?.address?.streetaddress,
+          address: user?.selectedaddress?.streetaddress,
           image: user?.profilepic,
-          city: user?.address?.city,
-          state: user?.address?.state,
+          city: user?.selectedaddress?.city,
+          state: user?.selectedaddress?.state,
           password: decryptaes(user.passw),
-          pincode: user?.address?.pincode,
+          pincode: user?.selectedaddress?.pincode,
           userid: user._id,
           advertiserid: generateUniqueID(),
         });
@@ -856,12 +856,12 @@ const loginforAdspace = async (req, res) => {
           type: "Individual",
           email: user.email,
           phone: user.phone,
-          address: user?.address?.streetaddress,
+          address: user?.selectedaddress?.streetaddress,
           image: user?.profilepic,
-          city: user?.address?.city,
-          state: user?.address?.state,
+          city: user?.selectedaddress?.city,
+          state: user?.selectedaddress?.state,
           password: decryptaes(user.passw),
-          pincode: user?.address?.pincode,
+          pincode: user?.selectedaddress?.pincode,
           userid: user._id,
           advertiserid: generateUniqueID(),
         });
@@ -932,6 +932,7 @@ const loginwithworkspace = async (req, res) => {
       user = await User.findById(id);
     }
 
+    
     if (!user) {
       return res
         .status(203)
@@ -953,9 +954,7 @@ const loginwithworkspace = async (req, res) => {
       communityId: post.community._id,
       communityName: post.community.title,
       dp: process.env.URL + post.community.dp,
-    };
-
-    console.log(postData);
+    }
 
     let Advertiser;
     if (user instanceof advertiser) {
@@ -967,18 +966,19 @@ const loginwithworkspace = async (req, res) => {
         const firstName = user?.fullname?.split(" ")[0] || user?.fullname;
         const lastName = user?.fullname?.split(" ")[1];
 
+      
         Advertiser = new advertiser({
           firstname: firstName,
           lastname: lastName || undefined,
           type: "Individual",
           email: user.email,
           phone: user.phone,
-          address: user?.address?.streetaddress,
+          address: user?.selectedaddress?.streetaddress||"",
           image: user?.profilepic,
-          city: user?.address?.city,
-          state: user?.address?.state,
-          password: decryptaes(user.passw),
-          pincode: user?.address?.pincode,
+          city: user?.selectedaddress?.city||"",
+          state: user?.selectedaddress?.state||"",
+          password: decryptaes(user.passw)||"",
+          pincode: user?.selectedaddress?.pincode||"",
           userid: user._id,
           advertiserid: generateUniqueID(),
         });
@@ -1191,6 +1191,8 @@ const addUser = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
+    console.log(user, "user",user instanceof advertiser);
+
     const storedPassword =
       user instanceof advertiser ? user.password : decryptaes(user.passw);
     if (password !== storedPassword) {
@@ -1198,6 +1200,8 @@ const addUser = async (req, res) => {
         .status(403)
         .json({ success: false, message: "Invalid credentials" });
     }
+
+    
 
     let advertiserInstance;
     if (user instanceof advertiser) {
@@ -1214,12 +1218,12 @@ const addUser = async (req, res) => {
           type: "Individual",
           email: user.email,
           phone: user.phone,
-          address: user?.address?.streetaddress,
+          address: user?.selectedaddress?.streetaddress||"",
           image: user?.profilepic,
-          city: user?.address?.city,
-          state: user?.address?.state,
+          city: user?.selectedaddress?.city||"",
+          state: user?.selectedaddress?.state||"",
           password: user.password,
-          pincode: user?.address?.pincode,
+          pincode: user?.selectedaddress?.pincode||"",
           userid: user._id,
           advertiserid: generateUniqueID(),
         });

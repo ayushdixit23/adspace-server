@@ -12,6 +12,7 @@ import Post from "../models/post.js";
 import Approvals from "../models/approve.js";
 import advertiser from "../models/advertiser.js";
 import LocationData from "../models/LocationData.js";
+import { constructFrom } from "date-fns";
 
 // const producer = kafka.producer();
 // console.log("Connecting Producer...");
@@ -24,8 +25,6 @@ const createAd = async (req, res) => {
     const file = req.file;
 
     let user;
-    console.log(parsedData, "parsedData");
-    
 
     if (parsedData.creatorid) {
       user = await User.findById(parsedData.creatorid).populate({
@@ -33,9 +32,7 @@ const createAd = async (req, res) => {
         select: "_id"
       });
 
-      console.log("data from creatorid", user);
-      
-
+  
       if (user) {
         user = await advertiser.findById(user.advertiserid._id);
         console.log("data from creator ad account", user);
@@ -51,31 +48,48 @@ const createAd = async (req, res) => {
       console.log("data from advertiser ad account", user);
     }
 
-    if (!file) {
+    if (!file&&!parsedData?.file) {
       return res.status(203).json({ message: "Media is required!" });
     }
 
+    let objectName
     const uuidString = uuidv4();
 
-    let objectName = `${Date.now()}${uuidString}${file.originalname}`;
+    if(file){
+    
+      objectName = `${Date.now()}${uuidString}${file.originalname}`;
+ 
+     await s3.send(
+       new PutObjectCommand({
+         Bucket: process.env.AD_BUCKET,
+         Key: objectName,
+         Body: file.buffer,
+         ContentType: file.mimetype,
+       })
+     );
+ 
+     await s3.send(
+       new PutObjectCommand({
+         Bucket: process.env.POST_BUCKET,
+         Key: objectName,
+         Body: file.buffer,
+         ContentType: file.mimetype,
+       })
+     );
+    }
+    const cont = parsedData?.file.split(".net/")[1];
+    const extensionss = cont.split(".").pop();
+    let objectMedia = `${cont}`;
+    
+   const contents = {
+      extension: `${parsedData.isImage}/${extensionss}`,
+      name: objectMedia,
+    };
 
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: process.env.AD_BUCKET,
-        Key: objectName,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-      })
-    );
-
-    await s3.send(
-      new PutObjectCommand({
-        Bucket: process.env.POST_BUCKET,
-        Key: objectName,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-      })
-    );
+    const isFile = file ? {
+      extension: req.file.mimetype,
+      name: objectName,
+    } : contents 
 
     const newAd = new ads({
       adname: parsedData.name,
@@ -92,11 +106,7 @@ const createAd = async (req, res) => {
       category:JSON.parse( parsedData.communityTags)||[],
       cta: parsedData.cta || null,
       ctalink: parsedData.ctalink,
-      content: [{
-              extension: req.file.mimetype,
-              name: objectName,
-            },
-          ],
+      content: [isFile],
       type: parsedData.type,
      
       gender: parsedData.gender,
@@ -166,6 +176,7 @@ const createAd = async (req, res) => {
         topicId: topic[0]._id,
         tags: parsedData.community.category,
         kind: "ad",
+       
         isPromoted: true,
         cta: parsedData?.cta,
         ctalink: parsedData.ctalink,
@@ -189,7 +200,7 @@ const createAd = async (req, res) => {
     } else {
       const post = await Post.findById(parsedData?.postid);
       post.kind = "ad";
-      isPromoted = true;
+      post.isPromoted = true;
       post.cta = parsedData?.cta;
       post.ctalink = parsedData?.ctalink;
       post.adtype = parsedData?.type;
@@ -263,10 +274,7 @@ const createAdwithCommunity = async (req, res) => {
         ContentType: communityImageFile.mimetype,
       })
     );
-
-    console.log(userauth);
     
-
     const community = new Community({
       title: parsedData?.community,
       creator: userauth?._id,
@@ -352,11 +360,7 @@ const createAdwithCommunity = async (req, res) => {
       category:JSON.parse( parsedData.communityTags)||[],
       cta: parsedData.cta || null,
       ctalink: parsedData.ctalink,
-      content: [{
-        extension: file.mimetype, 
-        name: objectName, 
-            },
-          ],
+      content: [isFile],
       type: parsedData.type,
       gender: parsedData.gender,
       minage: parsedData.ageGroup?.minage,

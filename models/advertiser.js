@@ -12,8 +12,8 @@ const AdvertiserSchema = new mongoose.Schema({
     url: { type: String },
     name: { type: String }
   },
-  email: { type: String, unique: true, required: true },
-  phone: { type: String, required: true },
+  email: { type: String, unique: true},
+  phone: { type: String},
   organizationname: { type: String },
   pan: { type: String },
   panphoto: { type: String },
@@ -27,7 +27,7 @@ const AdvertiserSchema = new mongoose.Schema({
     default: { type: Boolean, default: false }
   },
   clientadvertiserid: [{ type: mongoose.Schema.Types.ObjectId, ref: "Advertiser" }],
-  password: { type: String, required: true },
+  password: { type: String },
   address: { type: String },
   city: { type: String },
   state: { type: String },
