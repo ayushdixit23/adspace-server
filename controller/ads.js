@@ -19,115 +19,304 @@ import { constructFrom } from "date-fns";
 // await producer.connect();
 // console.log("Producer Connected Successfully");
 
+// const createAd = async (req, res) => {
+//   try {
+//     const parsedData = req.body;
+//     const file = req.file;
+
+//     let user;
+
+//     if (parsedData.creatorid) {
+//       user = await User.findById(parsedData.creatorid).populate({
+//         path: "advertiserid",
+//         select: "_id",
+//       });
+
+//       if (user) {
+//         user = await advertiser.findById(user.advertiserid._id);
+//         console.log("data from creator ad account", user);
+//       } else {
+//         user = await advertiser.findById(req.user);
+//         console.log("data from advertiser ad account", user);
+//       }
+//     } else {
+//       user = await advertiser.findById(req.user);
+//       console.log("data from advertiser ad account", user);
+//     }
+
+//     if (!file && !parsedData?.file) {
+//       return res.status(203).json({ message: "Media is required!" });
+//     }
+
+//     let objectName;
+//     let cont;
+//     let extensionss;
+//     let objectMedia;
+//     const uuidString = uuidv4();
+
+//     if (file) {
+//       objectName = `${Date.now()}${uuidString}${file.originalname}`;
+
+//       await s3.send(
+//         new PutObjectCommand({
+//           Bucket: process.env.AD_BUCKET,
+//           Key: objectName,
+//           Body: file.buffer,
+//           ContentType: file.mimetype,
+//         })
+//       );
+
+//       await s3.send(
+//         new PutObjectCommand({
+//           Bucket: process.env.POST_BUCKET,
+//           Key: objectName,
+//           Body: file.buffer,
+//           ContentType: file.mimetype,
+//         })
+//       );
+//     } else {
+//       cont = parsedData?.file.split(".net/")[1];
+//       extensionss = cont.split(".").pop();
+//       objectMedia = `${cont}`;
+//     }
+
+//     const contents = {
+//       extension: `${parsedData.isImage}/${extensionss}`,
+//       name: objectMedia,
+//     };
+
+//     const isFile = file
+//       ? {
+//           extension: req.file.mimetype,
+//           name: objectName,
+//         }
+//       : contents;
+
+//     const newAd = new ads({
+//       adname: parsedData.name,
+//       status: parsedData.status,
+//       engagementrate: parsedData.engagementrate,
+//       amountspent: parsedData.amountspent,
+//       postid: parsedData.postid ? parsedData.postid : undefined,
+//       advertiserid: user._id,
+//       startdate: parsedData.startDate,
+//       enddate: parsedData.endDate,
+//       goal: parsedData.objective.name,
+//       tags: JSON.parse(parsedData.interestTags) || [],
+//       location: JSON.parse(parsedData.location) || [],
+//       category: JSON.parse(parsedData.communityTags) || [],
+//       cta: parsedData.cta || null,
+//       ctalink: parsedData.ctalink,
+//       content: [isFile],
+//       type: parsedData.type,
+
+//       gender: parsedData.gender,
+//       minage: parsedData.ageGroup?.minage,
+//       maxage: parsedData.ageGroup?.maxage,
+//       totalbudget: parsedData.totalBudget,
+//       adsDetails:
+//         parsedData.adsDetails?.map((detail) => ({
+//           time: detail.time,
+//           click: detail.click,
+//           impressions: detail.impressions,
+//           cpc: detail.cpc,
+//           cost: detail.cost,
+//         })) || [],
+//       dailybudget: parsedData.dailyBudget,
+//       audiencesize: parsedData.audienceSize,
+//       editcount:
+//         parsedData.editCount?.map((edit) => ({
+//           date: edit.date,
+//           number: edit.number,
+//         })) || [],
+//       creation: parsedData.creation,
+//       headline: parsedData.headline,
+//       desc: parsedData.description,
+//       totalspent: parsedData.totalspent,
+//       views: parsedData.views,
+//       impressions: parsedData.impressions,
+//       cpc: parsedData.cpc,
+//       clicks: parsedData.clicks,
+//       popularity: parsedData.popularity,
+//     });
+
+//     const adSaved = await newAd.save();
+//     user.ads.push(adSaved._id);
+//     await user.save();
+
+//     const initialAdStats = new AdStats({
+//       adId: newAd._id,
+//       date: new Date(),
+//       impressions: [],
+//       clicks: [],
+//       costPerClick: newAd.cpc || 0,
+//       amountSpent: newAd.totalspent || 0,
+//       views: [],
+//       engagement: 0,
+//       reach: 0,
+//       conversions: 0,
+//       conversionRate: 0,
+//     });
+
+//     // Save initial statistics
+//     await initialAdStats.save();
+
+//     const topic = await Topic.find({ community: parsedData.comid }).find({
+//       title: "Posts",
+//     });
+
+//     let idofad;
+
+//     if (!parsedData.postid) {
+//       const post = new Post({
+//         title: parsedData.headline,
+//         desc: parsedData.desc,
+//         community: parsedData.comid,
+//         sender: user.userid,
+//         post: [{ content: objectName, type: file.mimetype }],
+//         topicId: topic[0]._id,
+//         tags: parsedData.community.category,
+//         kind: "ad",
+
+//         isPromoted: true,
+//         cta: parsedData?.cta,
+//         ctalink: parsedData.ctalink,
+//         adtype: parsedData?.type,
+//         promoid: adSaved._id,
+//       });
+//       const savedpost = await post.save();
+//       const ad = await ads.findById(adSaved._id);
+//       ad.postid = savedpost._id;
+
+//       idofad = await ad.save();
+//       await Community.updateOne(
+//         { _id: parsedData?.comid },
+//         { $push: { posts: savedpost._id }, $inc: { totalposts: 1 } }
+//       );
+
+//       await Topic.updateOne(
+//         { _id: topic[0]._id.toString() },
+//         { $push: { posts: savedpost._id }, $inc: { postcount: 1 } }
+//       );
+//     } else {
+//       const post = await Post.findById(parsedData?.postid);
+//       post.kind = "ad";
+//       post.isPromoted = true;
+//       post.cta = parsedData?.cta;
+//       post.ctalink = parsedData?.ctalink;
+//       post.adtype = parsedData?.type;
+//       post.promoid = adSaved._id;
+
+//       const savedpost = await post.save();
+
+//       const findad = await ads.findById(adSaved._id);
+//       findad.postid = savedpost._id;
+//       idofad = await findad.save();
+//     }
+
+//     const approve = new Approvals({
+//       id: idofad._id,
+//       type: "ad",
+//     });
+
+//     await approve.save();
+
+//     // Respond with success
+//     return res.status(201).json({
+//       success: true,
+//       message: "Ad created successfully!",
+//       ad: newAd,
+//       initialStats: initialAdStats,
+//     });
+//   } catch (error) {
+//     console.error(error);
+
+//     // Respond with validation error messages
+//     return res.status(400).json({
+//       success: false,
+//       message: error.errors || "Invalid input.",
+//     });
+//   }
+// };
+
 const createAd = async (req, res) => {
   try {
-    const parsedData = req.body;
-    const file = req.file;
+    const { body: parsedData, file } = req;
 
-    let user;
+    // Fetch user data
+    const creatorId = parsedData.creatorid;
+    let user = creatorId
+      ? await User.findById(creatorId).populate({ path: "advertiserid", select: "_id" })
+      : null;
 
-    if (parsedData.creatorid) {
-      user = await User.findById(parsedData.creatorid).populate({
-        path: "advertiserid",
-        select: "_id"
-      });
-
-  
-      if (user) {
-        user = await advertiser.findById(user.advertiserid._id);
-        console.log("data from creator ad account", user);
-        
-      } else {
-        
-        user = await advertiser.findById(req.user);
-        console.log("data from advertiser ad account", user);
-
-      }
+    if (user) {
+      user = await advertiser.findById(user.advertiserid._id);
     } else {
       user = await advertiser.findById(req.user);
-      console.log("data from advertiser ad account", user);
     }
 
-    if (!file&&!parsedData?.file) {
-      return res.status(203).json({ message: "Media is required!" });
+    // Check for required media file
+    if (!file && !parsedData?.file) {
+      return res.status(400).json({ message: "Media is required!" });
     }
 
-    let objectName
+    // Handle file or existing media
     const uuidString = uuidv4();
+    const objectName = file ? `${Date.now()}${uuidString}${file.originalname}` : null;
 
-    if(file){
-    
-      objectName = `${Date.now()}${uuidString}${file.originalname}`;
- 
-     await s3.send(
-       new PutObjectCommand({
-         Bucket: process.env.AD_BUCKET,
-         Key: objectName,
-         Body: file.buffer,
-         ContentType: file.mimetype,
-       })
-     );
- 
-     await s3.send(
-       new PutObjectCommand({
-         Bucket: process.env.POST_BUCKET,
-         Key: objectName,
-         Body: file.buffer,
-         ContentType: file.mimetype,
-       })
-     );
+    if (file) {
+      const putObjectParams = {
+        Body: file.buffer,
+        ContentType: file.mimetype,
+        Key: objectName,
+      };
+
+      await Promise.all([
+        s3.send(new PutObjectCommand({ Bucket: process.env.AD_BUCKET, ...putObjectParams })),
+        s3.send(new PutObjectCommand({ Bucket: process.env.POST_BUCKET, ...putObjectParams })),
+      ]);
     }
-    const cont = parsedData?.file.split(".net/")[1];
-    const extensionss = cont.split(".").pop();
-    let objectMedia = `${cont}`;
-    
-   const contents = {
-      extension: `${parsedData.isImage}/${extensionss}`,
-      name: objectMedia,
-    };
 
-    const isFile = file ? {
-      extension: req.file.mimetype,
-      name: objectName,
-    } : contents 
+    const existingFile = !file ? parsedData.file?.split(".net/")[1] : null;
+    const extensions = existingFile?.split(".").pop();
+    const isFile = file
+      ? { extension: file.mimetype, name: objectName }
+      : { extension: `${parsedData.isImage}/${extensions}`, name: existingFile };
 
+    // Create new Ad
     const newAd = new ads({
       adname: parsedData.name,
       status: parsedData.status,
       engagementrate: parsedData.engagementrate,
       amountspent: parsedData.amountspent,
-      postid: parsedData.postid?parsedData.postid:undefined,
       advertiserid: user._id,
       startdate: parsedData.startDate,
       enddate: parsedData.endDate,
       goal: parsedData.objective.name,
-      tags:JSON.parse( parsedData.interestTags) || [],
-      location: JSON.parse(parsedData.location) || [],
-      category:JSON.parse( parsedData.communityTags)||[],
+      tags: JSON.parse(parsedData.interestTags || "[]"),
+      location: JSON.parse(parsedData.location || "[]"),
+      category: JSON.parse(parsedData.communityTags || "[]"),
       cta: parsedData.cta || null,
       ctalink: parsedData.ctalink,
       content: [isFile],
       type: parsedData.type,
-     
       gender: parsedData.gender,
       minage: parsedData.ageGroup?.minage,
       maxage: parsedData.ageGroup?.maxage,
       totalbudget: parsedData.totalBudget,
-      adsDetails:
-        parsedData.adsDetails?.map((detail) => ({
-          time: detail.time,
-          click: detail.click,
-          impressions: detail.impressions,
-          cpc: detail.cpc,
-          cost: detail.cost,
-        })) || [],
+      adsDetails: (parsedData.adsDetails || []).map((detail) => ({
+        time: detail.time,
+        click: detail.click,
+        impressions: detail.impressions,
+        cpc: detail.cpc,
+        cost: detail.cost,
+      })),
       dailybudget: parsedData.dailyBudget,
       audiencesize: parsedData.audienceSize,
-      editcount:
-        parsedData.editCount?.map((edit) => ({
-          date: edit.date,
-          number: edit.number,
-        })) || [],
+      editcount: (parsedData.editCount || []).map((edit) => ({
+        date: edit.date,
+        number: edit.number,
+      })),
       creation: parsedData.creation,
       headline: parsedData.headline,
       desc: parsedData.description,
@@ -139,10 +328,11 @@ const createAd = async (req, res) => {
       popularity: parsedData.popularity,
     });
 
-    const adSaved = await newAd.save();
-    user.ads.push(adSaved._id);
+    await newAd.save();
+    user.ads.push(newAd._id);
     await user.save();
 
+    // Initialize Ad statistics
     const initialAdStats = new AdStats({
       adId: newAd._id,
       date: new Date(),
@@ -157,68 +347,60 @@ const createAd = async (req, res) => {
       conversionRate: 0,
     });
 
-    // Save initial statistics
     await initialAdStats.save();
 
-    const topic = await Topic.find({ community: parsedData.comid }).find({
-      title: "Posts",
-    });
-
-    let idofad;
-
-    if (!parsedData.postid) {
-      const post = new Post({
+    // Handle associated Post
+    let postId = parsedData.postid;
+    if (!postId) {
+      const topic = await Topic.findOne({ community: parsedData.comid, title: "Posts" });
+      const newPost = new Post({
         title: parsedData.headline,
         desc: parsedData.desc,
         community: parsedData.comid,
         sender: user.userid,
         post: [{ content: objectName, type: file.mimetype }],
-        topicId: topic[0]._id,
+        topicId: topic?._id,
         tags: parsedData.community.category,
         kind: "ad",
-       
         isPromoted: true,
-        cta: parsedData?.cta,
+        cta: parsedData.cta,
         ctalink: parsedData.ctalink,
-        adtype: parsedData?.type,
-        promoid: adSaved._id,
+        adtype: parsedData.type,
+        promoid: newAd._id,
       });
-      const savedpost = await post.save();
-      const ad = await ads.findById(adSaved._id);
-      ad.postid = savedpost._id;
 
-      idofad = await ad.save();
+      const savedPost = await newPost.save();
+      newAd.postid = savedPost._id;
+      await newAd.save();
+
+      postId = savedPost._id;
+
       await Community.updateOne(
-        { _id: parsedData?.comid },
-        { $push: { posts: savedpost._id }, $inc: { totalposts: 1 } }
+        { _id: parsedData.comid },
+        { $push: { posts: postId }, $inc: { totalposts: 1 } }
       );
-
       await Topic.updateOne(
-        { _id: topic[0]._id.toString() },
-        { $push: { posts: savedpost._id }, $inc: { postcount: 1 } }
+        { _id: topic?._id },
+        { $push: { posts: postId }, $inc: { postcount: 1 } }
       );
     } else {
-      const post = await Post.findById(parsedData?.postid);
-      post.kind = "ad";
-      post.isPromoted = true;
-      post.cta = parsedData?.cta;
-      post.ctalink = parsedData?.ctalink;
-      post.adtype = parsedData?.type;
-      post.promoid = adSaved._id;
+      const post = await Post.findById(postId);
+      Object.assign(post, {
+        kind: "ad",
+        isPromoted: true,
+        cta: parsedData.cta,
+        ctalink: parsedData.ctalink,
+        adtype: parsedData.type,
+        promoid: newAd._id,
+      });
+      await post.save();
 
-      const savedpost = await post.save();
-
-      const findad = await ads.findById(adSaved._id);
-      findad.postid = savedpost._id;
-      idofad = await findad.save();
+      newAd.postid = post._id;
+      await newAd.save();
     }
 
-    const approve = new Approvals({
-      id: idofad._id,
-      type: "ad",
-    });
-
-    await approve.save();
+    // Create Approval
+    await new Approvals({ id: newAd._id, type: "ad" }).save();
 
     // Respond with success
     return res.status(201).json({
@@ -230,13 +412,14 @@ const createAd = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    // Respond with validation error messages
+    // Handle errors
     return res.status(400).json({
       success: false,
-      message: error.errors || "Invalid input.",
+      message: error.message || "Invalid input.",
     });
   }
 };
+
 
 const createAdwithCommunity = async (req, res) => {
   try {
@@ -274,7 +457,7 @@ const createAdwithCommunity = async (req, res) => {
         ContentType: communityImageFile.mimetype,
       })
     );
-    
+
     const community = new Community({
       title: parsedData?.community,
       creator: userauth?._id,
@@ -350,14 +533,14 @@ const createAdwithCommunity = async (req, res) => {
       },
       engagementrate: parsedData.engagementrate,
       amountspent: parsedData.amountspent,
-      postid: parsedData.postid?parsedData.postid:undefined,
+      postid: parsedData.postid ? parsedData.postid : undefined,
       advertiserid: req.user,
       startdate: parsedData.startDate,
       enddate: parsedData.endDate,
       goal: parsedData.objective.name,
-      tags:JSON.parse( parsedData.interestTags) || [],
+      tags: JSON.parse(parsedData.interestTags) || [],
       location: JSON.parse(parsedData.location) || [],
-      category:JSON.parse( parsedData.communityTags)||[],
+      category: JSON.parse(parsedData.communityTags) || [],
       cta: parsedData.cta || null,
       ctalink: parsedData.ctalink,
       content: [isFile],
@@ -474,12 +657,12 @@ const getAdsStats = async (req, res) => {
     const { startDate, endDate, campaignOptions, selectedClient } = req.query;
 
     let advertiserid;
-    if(selectedClient){
+    if (selectedClient) {
       console.log("selectedClient 1", selectedClient);
-      
+
       advertiserid = selectedClient;
     } else {
-    advertiserid = req.user;
+      advertiserid = req.user;
     }
 
     if (!advertiserid) {
@@ -510,14 +693,13 @@ const getAdsStats = async (req, res) => {
       };
     }
 
-
     // const activeCampaignOptions = Object.keys(campaignOptions).filter(key => campaignOptions[key] === 'true');
     const activeCampaignOptions = Object.keys(campaignOptions).filter(
       (key) => campaignOptions[key] === "true" || campaignOptions[key] === true
     );
 
     const Advertiser = await advertiser.findById(advertiserid);
-    
+
     let adsData;
 
     if (Advertiser.type !== "Individual") {
@@ -861,12 +1043,12 @@ const getCommunities = async (req, res) => {
 
     const communitywithDps = await Promise.all(
       com.map(async (communityId) => {
-        const community = await Community.findById(communityId).select(
-          "dp title category _id type"
-        ).populate({
-          path: "creator",
-          select: "fullname username dp profilepic"
-        });
+        const community = await Community.findById(communityId)
+          .select("dp title category _id type")
+          .populate({
+            path: "creator",
+            select: "fullname username dp profilepic",
+          });
 
         if (community) {
           const dps = process.env.URL + community.dp;
@@ -881,12 +1063,17 @@ const getCommunities = async (req, res) => {
       (community) => community !== null
     );
 
-    const locationData = await LocationData.findOne()
-  .select("userData.state userData.gender userData.age");
-   
+    const locationData = await LocationData.findOne().select(
+      "userData.state userData.gender userData.age"
+    );
+
     res
       .status(200)
-      .json({ communitywithDps: filteredCommunities, success: true,locationData });
+      .json({
+        communitywithDps: filteredCommunities,
+        success: true,
+        locationData,
+      });
   } catch (error) {
     console.log(error);
     res.status(400).json({ success: false, message: "Something Went Wrong!" });
